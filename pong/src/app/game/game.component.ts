@@ -23,8 +23,8 @@ export class GameComponent implements OnDestroy, AfterViewInit {
             scene: [BootScene, GameScene, GameOverScene],
             parent: this.gameContainerRef.nativeElement,
             physics: {
-                default: 'arcade',
-                arcade: { debug: false, gravity: {y : 0} }
+                default: 'matter',
+                matter: { debug: false, gravity: {y : 0} }
             }
         };
         // create game instance

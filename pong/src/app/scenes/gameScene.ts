@@ -2,65 +2,105 @@ import { BaseScene } from "./baseScene";
 
 export class GameScene extends BaseScene {
 
-	private ball!: Phaser.Physics.Arcade.Sprite;
-	private topBorder!: Phaser.Physics.Arcade.Sprite;
-	private bottomBorder!: Phaser.Physics.Arcade.Sprite;
-	private rightBorder!: Phaser.Physics.Arcade.Sprite;
-	private leftBorder!: Phaser.Physics.Arcade.Sprite;
+	private ball!: Phaser.Physics.Matter.Image;
+    private topBorder!: Phaser.Physics.Matter.Image;
+    private bottomBorder!: Phaser.Physics.Matter.Image;
+    private rightPaddle!: Phaser.Physics.Matter.Image;
+    private leftPaddle!: Phaser.Physics.Matter.Image;
+    private leftScore!: Phaser.GameObjects.Text;
+    private rightScore!: Phaser.GameObjects.Text;
+	private ballSpeed!: number;
 
 	constructor() {
 		super('GameScene');
 	}
 
+	private setBallSpeed(speed: number) : void {
+		this.ballSpeed = speed;
+	}
+
 	override create() : void {
 		super.create();
 		this.createBordersWithPhysics(8);
-		this.displayBall();
-		this.displayPaddles();
+		this.displayBall(24);
+		this.createPaddlesWithPhysics(30, 15, 80);
 		this.displayScore();
+		this.setBallSpeed(2);
+		this.implementBallMovement();
 	}
 
-	createBordersWithPhysics(borderWidth: number) : void {
-		this.topBorder = this.createBorderSprite(0, 0, false, borderWidth);
-		this.bottomBorder = this.createBorderSprite(0, this.scale.height - borderWidth, false, borderWidth);
-		this.rightBorder = this.createBorderSprite(this.scale.width - borderWidth, 0, true, borderWidth);
-		this.leftBorder = this.createBorderSprite(0, 0, true, borderWidth);
-	}
-
-	private createBorderSprite(x: number, y: number, isVertical: boolean, borderWidth: number)
-	: Phaser.Physics.Arcade.Sprite {
-		let drawer = this.add.graphics();
-
-		drawer.fillStyle(0xFFFFFF); // white
-		let textureKey = 'borderTexture';
-		if (isVertical) {
-			drawer.fillRect(x, y, 8, this.scale.height);
-			drawer.generateTexture(textureKey, borderWidth, this.scale.height);
-		}
-		else {
-			drawer.fillRect(x, y, this.scale.width, borderWidth);
-			drawer.generateTexture(textureKey, this.scale.width, borderWidth);
-		}
-
-		let borderSprite = this.physics.add.sprite(x, y, textureKey);
-
-		borderSprite.setAlpha(0); // full opacity
-		return borderSprite;
-	}
-
-	displayBall() : void {
-		this.ball = this.physics.add.sprite(this.cameras.main.centerX, this.cameras.main.centerY, 'ball');
-	}
-
-	displayPaddles() : void {
-
+	implementBallMovement() : void {
+		let direction: number = 1; // chabge that with a more random stuff
+		this.ball.setVelocity(this.ballSpeed * direction, this.ballSpeed * direction);
 	}
 
 	displayScore() : void {
-
+		this.leftScore = this.add.text(this.scale.width / 4, 50, '0', { font: '48px monospace', color: '#ffffff' });
+		this.rightScore = this.add.text(this.scale.width * 3 / 4, 50, '0', { font: '48px monospace', color: '#ffffff' });
+		// make sure the z-index of ball is superior to the z-index of the score
+		this.ball.setDepth(1);
+		this.leftScore.setDepth(0);
+		this.rightScore.setDepth(0);
 	}
 
-	override update(time: number, delta: number): void {
+	createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number) : void {
+		this.leftPaddle = this.createPaddleSprite(x, paddleWidth, paddleHeight);
+		this.rightPaddle = this.createPaddleSprite(this.scale.width - x, paddleWidth, paddleHeight);
+	}
+
+	private createPaddleSprite(x: number, paddleWidth: number, paddleHeight: number)
+	: Phaser.Physics.Matter.Image {
+		let paddleSprite = this.matter.add.image(x, this.scale.height / 2,
+		'invisible', "", { isStatic: true, label: 'paddle' });
+
+		let paddleDrawer = this.add.graphics({ fillStyle: { color: 0xFFFFFF } });
+		paddleDrawer.fillRect(0, 0, paddleWidth, paddleHeight);
+		paddleDrawer.generateTexture('paddleTexture', paddleWidth, paddleHeight);
+		paddleDrawer.destroy();
+
+		paddleSprite.setTexture('paddleTexture');
+		paddleSprite.setRectangle(paddleWidth, paddleHeight);
+		paddleSprite.setStatic(true);
+	
+		return paddleSprite;
+	}
+
+	createBordersWithPhysics(borderWidth: number) : void { // test physics, graphics works
+		let borderDrawer = this.add.graphics({ fillStyle: { color: 0xFFFFFF } });
+
+		borderDrawer.fillRect(0, 0, this.scale.width, borderWidth);
+		borderDrawer.generateTexture('borderTexture', this.scale.width, borderWidth);
+		borderDrawer.destroy();
+
+		this.topBorder = this.matter.add.image(this.scale.width / 2, borderWidth / 2,
+		'borderTexture', "", {label: 'border'})
+        .setRectangle(this.scale.width, borderWidth)
+        .setStatic(true);
+
+   		this.bottomBorder = this.matter.add.image(this.scale.width / 2, this.scale.height - borderWidth / 2,
+		   'borderTexture', "", { label: 'border' })
+        .setRectangle(this.scale.width, borderWidth)
+        .setStatic(true);
+	}
+
+	displayBall(ballSize: number) : void {
+		const circleRadius: number = ballSize / 2;
 		
+		let ballDrawer = this.add.graphics({ fillStyle: { color: 0xFFFFFF } });
+		ballDrawer.fillCircle(circleRadius, circleRadius, circleRadius);
+		ballDrawer.generateTexture('ballTexture', ballSize, ballSize);		
+		ballDrawer.destroy();
+		
+		this.ball = this.matter.add.image(this.scale.width / 2, this.scale.height / 2, 
+		'ballTexture', "", { isStatic: false });		
+		this.ball.setCircle(circleRadius);		
+		this.ball.setBounce(1);
+		this.ball.setFrictionAir(0);
+		this.ball.setIgnoreGravity(true);
+		this.ball.setFriction(0);
+	}
+	
+	override update(time: number, delta: number): void {
+	
 	}
 }

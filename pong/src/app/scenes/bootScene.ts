@@ -30,7 +30,7 @@ export class BootScene extends BaseScene {
 		this.countdownVal--;
 		this.countdownText.setText(this.countdownVal.toString());
 
-		if (this.countdownVal <= 0) {
+		if (this.countdownVal <= 4) { // change this
 			this.scene.start('GameScene');
 		}
 	}
@@ -54,13 +54,5 @@ export class BootScene extends BaseScene {
 		// Bottom border
 		const bottomBorder = this.add.rectangle(this.scale.width / 2, this.scale.height - offset, 
 		this.scale.width, borderWidth, 0xFFFFFF);
-		
-		// Left border
-		const leftBorder = this.add.rectangle(offset, this.scale.height / 2, borderWidth, 
-		this.scale.height, 0xFFFFFF);
-		
-		// Right border
-		const rightBorder = this.add.rectangle(this.scale.width - offset, this.scale.height / 2, borderWidth, 
-		this.scale.height, 0xFFFFFF);
 	}
 }
