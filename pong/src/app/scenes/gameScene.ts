@@ -12,6 +12,7 @@ export class GameScene extends BaseScene {
     private leftPaddle!: Paddle;
     private leftScore!: Phaser.GameObjects.Text;
     private rightScore!: Phaser.GameObjects.Text;
+	private isHandlingPaddleCol: boolean = false;
 
 	constructor() {
 		super('GameScene');
@@ -20,12 +21,11 @@ export class GameScene extends BaseScene {
 	override create() : void {
 		super.create();
 		this.implementBorders(8);
-		this.createPaddlesWithPhysics(30, 15, 80);
-		this.implementBall();
+		this.createPaddlesWithPhysics(30, 15, 80, 4);
+		this.implementBall(2, 16);
 		this.displayScore();
-		console.log('go there');
-		// this.setupBorderCollision();
-		// this.setupBallPaddleCollision();
+		this.setupBorderCollision();
+		this.setupBallPaddleCollision();
 	}
 
 	private implementBorders(borderWidth: number) : void {
@@ -35,13 +35,20 @@ export class GameScene extends BaseScene {
 		this.scale.width, borderWidth);
 	}
 
-	private implementBall() : void {
-		this.ball = new Ball(this, 1, 8);
+	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void {
+		this.leftPaddle = new Paddle(this, paddleWidth, paddleWidth, paddleHeight, speed);
+		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight, speed);
+
+		if (this.input && this.input.keyboard) {
+            this.input.keyboard.on('keydown', this.leftPaddle.triggerPaddleMove, this);
+			this.input.keyboard.on('keydown', this.rightPaddle.triggerPaddleMove, this);
+            this.input.keyboard.on('keyup', this.leftPaddle.stopPaddleMove, this);
+			this.input.keyboard.on('keyup', this.rightPaddle.stopPaddleMove, this);
+        } // add handling error there
 	}
 
-	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number) : void {
-		this.leftPaddle = new Paddle(this, paddleWidth, paddleWidth, paddleHeight);
-		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight);
+	private implementBall(ballSpeed: number, ballSize: number) : void {
+		this.ball = new Ball(this, ballSpeed, ballSize);
 	}
 
 	private displayScore() : void { // this is functional
@@ -68,45 +75,61 @@ export class GameScene extends BaseScene {
 			});
 		});
 	}
-	
-	private setupBallPaddleCollision() : void { // does not work
-		this.matter.world.on('collisionstart', (event: { bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType }) => {
-			let ball: Ball | null = null;
-			let paddle: Paddle | null = null;
-	
-			if (event.bodyA && event.bodyB) {
-				if ((event.bodyA.gameObject === this.ball.getImage() && 
-                    (event.bodyB.gameObject === this.leftPaddle.getImage() 
-					|| event.bodyB.gameObject === this.rightPaddle.getImage()))) {
-                    ball = this.ball;
-                    paddle = (event.bodyB.gameObject === this.leftPaddle.getImage()) ? this.leftPaddle : this.rightPaddle;
-                } else if ((event.bodyB.gameObject === this.ball.getImage() && 
-                    (event.bodyA.gameObject === this.leftPaddle.getImage() 
-					|| event.bodyA.gameObject === this.rightPaddle.getImage()))) {
-                    ball = this.ball;
-                    paddle = (event.bodyA.gameObject === this.leftPaddle.getImage()) ? this.leftPaddle : this.rightPaddle;
-                }
 
+	private isPaddleCollision(pair : Phaser.Types.Physics.Matter.MatterCollisionData) : boolean {
+		if ((pair.bodyA === this.ball.getImageBody() && (pair.bodyB === this.leftPaddle.getImageBody() 
+		|| pair.bodyB === this.rightPaddle.getImageBody()))) {
+			return true;
+		}
+		else if ((pair.bodyB === this.ball.getImageBody() && (pair.bodyA === this.leftPaddle.getImageBody() 
+		|| pair.bodyA === this.rightPaddle.getImageBody()))) {
+			return true;
+		}
+		return false;
+	}
+
+	private setupBallPaddleCollision() : void { // check this
+		this.isHandlingPaddleCol = true;
+		this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionActiveEvent) => {
+			event.pairs.forEach(pair => {
+				let ball: Ball | null = null;
+				let paddle: Paddle | null = null;
+
+				if (this.isPaddleCollision(pair) === true) {
+					ball = this.ball;
+					if (pair.bodyA === this.leftPaddle.getImageBody() || pair.bodyB === this.rightPaddle.getImageBody()) {
+						paddle = (pair.bodyA === this.leftPaddle.getImageBody()) ? this.leftPaddle : this.rightPaddle;
+					}
+					else {
+						paddle = (pair.bodyB === this.leftPaddle.getImageBody()) ? this.leftPaddle : this.rightPaddle;
+					}
+				}
 				if (ball && paddle) {
-					// Calculate the normalized difference between ball's y and paddle's y
+					console.log('managing paddle collision');
+					paddle.setPaddleStaticFeature(true);
 					const diffY: number = (ball.getBallY() - paddle.getPaddleY()) / paddle.getPaddleHeight();
-					// Scale this difference by a certain factor to determine the bounce angle
-					// Adjust this factor to get the desired effect
 					const angle: number = diffY * 45; 		
-					// Calculate the velocity components based on the angle and the desired speed
 					let velocityX: number = this.ball.getBallSpeed() * Math.cos(angle);
 					const velocityY: number = this.ball.getBallSpeed() * Math.sin(angle);
-					// If the ball hits the right paddle, it should move left, hence the negative sign
 					if (paddle === this.rightPaddle) {
 						velocityX = -velocityX;
 					}
 					ball.setBallVelocity(velocityX, velocityY);
 				}
-			}
+			});
 		});
+		this.isHandlingPaddleCol = false;
+	}
+
+	private rmPaddleStaticState() : void {
+		if (!this.isHandlingPaddleCol && (this.leftPaddle || this.rightPaddle)) // modify that
+		{
+			this.leftPaddle.setPaddleStaticFeature(false);
+    		this.rightPaddle.setPaddleStaticFeature(false);
+		}
 	}
 	
 	override update(time: number, delta: number): void {
-	
+		this.rmPaddleStaticState();
 	}
 }

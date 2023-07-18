@@ -10,6 +10,7 @@ export class Ball {
 	constructor(scene: Phaser.Scene, ballSpeed: number, ballSize: number) {
 	  this.scene = scene;
 	  this.speed = ballSpeed;
+	  this.size = ballSize;
 	  this.displayBall(this.size);
 	  this.implementBallMovement();
 	}
@@ -59,16 +60,11 @@ export class Ball {
 		
 		let ballDrawer = this.scene.add.graphics({ fillStyle: { color: 0xFFFFFF } });
 		ballDrawer.fillCircle(circleRadius, circleRadius, circleRadius);
-		ballDrawer.generateTexture('ballTexture', ballSize, ballSize);		
+		ballDrawer.generateTexture('ballTexture', ballSize, ballSize);
 		ballDrawer.destroy();
-
-		const ballBody = this.scene.matter.bodies.circle(this.scene.scale.width / 2, this.scene.scale.height / 2, circleRadius, { isStatic: false });
 
 		this.ballImg = this.scene.matter.add.image(this.scene.scale.width / 2, this.scene.scale.height / 2, 
 		'ballTexture', "", { isStatic: false });
-
-		this.ballImg.setCircle(circleRadius);	
-		console.log('go there');
 		
 		this.ballImg.setBounce(1);
 		this.ballImg.setFrictionAir(0);
