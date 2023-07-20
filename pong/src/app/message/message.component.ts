@@ -10,4 +10,5 @@ export class MessageComponent {
   @Input() text!: string;
   @Input() timestamp!: Date;
   @Input() sender!: string;
+  @Input() photoUrl!: string;
 }

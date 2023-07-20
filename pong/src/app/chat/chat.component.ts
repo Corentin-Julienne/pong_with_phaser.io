@@ -1,4 +1,4 @@
-import { Component,AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { Message } from '../models/message.model';
 
 @Component({
@@ -6,7 +6,7 @@ import { Message } from '../models/message.model';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
-export class ChatComponent implements AfterViewChecked {
+export class ChatComponent {
   @ViewChild('messageList', { static: false }) messageList!: ElementRef;
  
   messages: Message[] = []; // hardcoded for the moment
@@ -23,9 +23,9 @@ export class ChatComponent implements AfterViewChecked {
     this.sender = this.messages.length % 2 === 0 ? 'me' : 'other';
     this.messages.push(new Message(inputMessage, new Date(), this.sender));
     this.newMessageText = '';
-  }
 
-  ngAfterViewChecked(): void {
+    console.log(this.messages.at(-1)?.photoUrl); // debug, display the last message url
+
     setTimeout(() => this.scrollToBottom(), 0);
   }
 
