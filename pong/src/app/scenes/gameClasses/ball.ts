@@ -5,14 +5,26 @@ export class Ball {
 	private ballImg!: Phaser.Physics.Matter.Image;
 	private scene!: Phaser.Scene;
 	private speed!: number;
+	private initialSpeed!: number;
 	private size!: number;
   
 	constructor(scene: Phaser.Scene, ballSpeed: number, ballSize: number) {
 	  this.scene = scene;
-	  this.speed = ballSpeed;
+	  this.initialSpeed = ballSpeed;
+	  this.speed = this.initialSpeed;
 	  this.size = ballSize;
 	  this.displayBall(this.size);
 	  this.implementBallMovement();
+	}
+
+	public isOutOfBounds(screenWidth: number, screenHeight: number): string {
+		const radius = this.size / 2;
+		if (this.ballImg.x + radius < 0) {
+			return 'left';
+		} else if (this.ballImg.x - radius > screenWidth) {
+			return 'right';
+		}
+		return 'in';
 	}
 
 	public setBallDepth(val: number) : void {
@@ -70,6 +82,19 @@ export class Ball {
 		this.ballImg.setFrictionAir(0);
 		this.ballImg.setIgnoreGravity(true);
 		this.ballImg.setFriction(0);
+	}
+
+	private resetBallPos() : void {
+		this.ballImg.setPosition(this.scene.scale.width /2, this.scene.scale.height / 2);
+	}
+
+	private resetBallSpeed() : void {
+		this.speed = this.initialSpeed;
+	}
+
+	public resetBall() : void {
+		this.resetBallPos();
+		this.resetBallSpeed();
 	}
 
 	private implementBallMovement() : void {

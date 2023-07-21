@@ -10,54 +10,52 @@ export class GameScene extends BaseScene {
     private bottomBorder!: Border;
     private rightPaddle!: Paddle;
     private leftPaddle!: Paddle;
-    private leftScore!: Phaser.GameObjects.Text;
-    private rightScore!: Phaser.GameObjects.Text;
-	private isHandlingPaddleCol: boolean = false;
+    private leftScoreObj!: Phaser.GameObjects.Text;
+    private rightScoreObj!: Phaser.GameObjects.Text;
+	private leftScore: number = 0;
+	private rightScore: number = 0;
+	private endGame: boolean = false;
 
 	constructor() {
 		super('GameScene');
 	}
 
+	init() : void {
+
+	}
+
 	override create() : void {
 		super.create();
+		this.displayNet();
 		this.implementBorders(8);
-		this.createPaddlesWithPhysics(30, 15, 80, 4);
-		this.implementBall(2, 16);
+		this.createPaddlesWithPhysics(30, 15, 80, 8);
+		this.implementBall(4, 16);
 		this.displayScore();
 		this.setupBorderCollision();
 		this.setupBallPaddleCollision();
 	}
 
-	private implementBorders(borderWidth: number) : void {
+	private implementBorders(borderWidth: number) : void { // works
 		this.topBorder = new Border(this, this.scale.width / 2, borderWidth / 2, 
 		this.scale.width, borderWidth);
 		this.bottomBorder = new Border(this, this.scale.width / 2, this.scale.height - borderWidth / 2, 
 		this.scale.width, borderWidth);
 	}
 
-	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void {
+	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void { // works
 		this.leftPaddle = new Paddle(this, paddleWidth, paddleWidth, paddleHeight, speed);
 		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight, speed);
-
-		if (this.input && this.input.keyboard) {
-            this.input.keyboard.on('keydown', this.leftPaddle.triggerPaddleMove, this);
-			this.input.keyboard.on('keydown', this.rightPaddle.triggerPaddleMove, this);
-            this.input.keyboard.on('keyup', this.leftPaddle.stopPaddleMove, this);
-			this.input.keyboard.on('keyup', this.rightPaddle.stopPaddleMove, this);
-        } // add handling error there
 	}
 
-	private implementBall(ballSpeed: number, ballSize: number) : void {
+	private implementBall(ballSpeed: number, ballSize: number) : void { // works
 		this.ball = new Ball(this, ballSpeed, ballSize);
 	}
 
 	private displayScore() : void { // this is functional
-		this.leftScore = this.add.text(this.scale.width / 4, 50, '0', { font: '48px monospace', color: '#ffffff' });
-		this.rightScore = this.add.text(this.scale.width * 3 / 4, 50, '0', { font: '48px monospace', color: '#ffffff' });
-		// make sure the z-index of ball is superior to the z-index of the score
-		this.ball.setBallDepth(1);
-		this.leftScore.setDepth(0);
-		this.rightScore.setDepth(0);
+		this.leftScoreObj = this.add.text(this.scale.width / 4, 50, this.leftScore.toString(), 
+		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
+		this.rightScoreObj = this.add.text(this.scale.width * 3 / 4, 50, this.rightScore.toString(), 
+		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
 	}
 
 	private setupBorderCollision(): void { // seems to be working
@@ -76,7 +74,7 @@ export class GameScene extends BaseScene {
 		});
 	}
 
-	private isPaddleCollision(pair : Phaser.Types.Physics.Matter.MatterCollisionData) : boolean {
+	private isPaddleCollision(pair : Phaser.Types.Physics.Matter.MatterCollisionData) : boolean { // works
 		if ((pair.bodyA === this.ball.getImageBody() && (pair.bodyB === this.leftPaddle.getImageBody() 
 		|| pair.bodyB === this.rightPaddle.getImageBody()))) {
 			return true;
@@ -89,7 +87,6 @@ export class GameScene extends BaseScene {
 	}
 
 	private setupBallPaddleCollision() : void { // check this
-		this.isHandlingPaddleCol = true;
 		this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionActiveEvent) => {
 			event.pairs.forEach(pair => {
 				let ball: Ball | null = null;
@@ -105,10 +102,9 @@ export class GameScene extends BaseScene {
 					}
 				}
 				if (ball && paddle) {
-					console.log('managing paddle collision');
-					paddle.setPaddleStaticFeature(true);
-					const diffY: number = (ball.getBallY() - paddle.getPaddleY()) / paddle.getPaddleHeight();
-					const angle: number = diffY * 45; 		
+					console.log('paddle collision registered'); // debug
+					const diffY: number = ((ball.getBallY() - paddle.getPaddleY()) / (paddle.getPaddleHeight() / 2)) - 1;
+					const angle: number = diffY * (45 * Math.PI / 180); 		
 					let velocityX: number = this.ball.getBallSpeed() * Math.cos(angle);
 					const velocityY: number = this.ball.getBallSpeed() * Math.sin(angle);
 					if (paddle === this.rightPaddle) {
@@ -118,18 +114,65 @@ export class GameScene extends BaseScene {
 				}
 			});
 		});
-		this.isHandlingPaddleCol = false;
-	}
-
-	private rmPaddleStaticState() : void {
-		if (!this.isHandlingPaddleCol && (this.leftPaddle || this.rightPaddle)) // modify that
-		{
-			this.leftPaddle.setPaddleStaticFeature(false);
-    		this.rightPaddle.setPaddleStaticFeature(false);
-		}
 	}
 	
 	override update(time: number, delta: number): void {
-		this.rmPaddleStaticState();
+		if (this.endGame)
+			return;
+		
+		this.leftPaddle.updatePaddlePos();
+		this.rightPaddle.updatePaddlePos();
+
+		const ballOut: string = this.ball.isOutOfBounds(this.scale.width, this.scale.height);
+
+		if (ballOut !== 'in') { // means a point has been marked
+			this.updateScore(ballOut);
+
+			if (this.leftScore !== 12 && this.rightScore !== 12) {
+				this.ball.resetBall();
+			} else {
+				this.endGame = true;
+			}
+		}
+		// trigger game over scene if conditions met (score === 12)
+		if (this.leftScore === 12 || this.rightScore === 12) {
+
+			this.time.delayedCall(1500, () => {
+				this.scene.start('GameOverScene');
+			}, [], this);
+		}
+	}
+
+	private updateScore(side: string) : void { // seems functional
+		if (side === 'left') {
+			this.rightScore++;
+			this.rightScoreObj.text = '';
+			this.displayScore();
+		} else if (side === 'right') {
+			this.leftScore++;
+			this.leftScoreObj.text = '';
+			this.displayScore();
+		}
+	}
+
+	private displayNet() : void {
+		const netWidth: number = 4;
+		const netHeight: number = 20;
+		const netGap: number = 15;
+		const drawer = this.add.graphics();
+		const offset = 8 / 2; // change that
+
+		// count net segments needed
+		const netSegmentCount: number = Math.floor(this.scale.height / (netHeight + netGap));
+
+		drawer.lineStyle(netWidth, 0xFFFFFF);
+
+		for (let i = 0; i < netSegmentCount; i++) {
+			const y = i * (netHeight + netGap) + offset + netGap / 2;
+			drawer.moveTo(this.scale.width / 2, y);
+			drawer.lineTo(this.scale.width / 2, y + netHeight);
+		}
+
+		drawer.strokePath();
 	}
 }
