@@ -31,6 +31,27 @@ export class Paddle {
         this.scene.input.keyboard?.on('keyup', this.handleKeyUp, this);
     }
 
+    private getReflectionAngle(segment: number): number {
+        switch (segment) {
+            case 4:
+            case 5:
+                return 0; // ball will go in straight line
+            default:
+                return 0; // change this later as per your requirement
+        }
+    }
+
+    // return a segment between 1 and 8
+    public returnReflectionAngle(ballY: number) : number {
+        let diffY = ballY - this.paddleImg.y;
+
+        diffY = (diffY + this.paddleImg.height / 2) / this.paddleImg.height;
+
+        const segment = Math.round(diffY * 8);
+
+        return (this.getReflectionAngle(Math.max(1, Math.min(8, segment))));
+    }
+
     private handleKeyDown(event: KeyboardEvent) : void {
         if (event.key === 'w' || event.key === 'ArrowUp')
             this.arrowUpPressed = true;

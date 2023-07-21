@@ -20,16 +20,12 @@ export class GameScene extends BaseScene {
 		super('GameScene');
 	}
 
-	init() : void {
-
-	}
-
 	override create() : void {
 		super.create();
 		this.displayNet();
 		this.implementBorders(8);
 		this.createPaddlesWithPhysics(30, 15, 80, 8);
-		this.implementBall(4, 16);
+		this.implementBall(2, 16);
 		this.displayScore();
 		this.setupBorderCollision();
 		this.setupBallPaddleCollision();
@@ -103,14 +99,15 @@ export class GameScene extends BaseScene {
 				}
 				if (ball && paddle) {
 					console.log('paddle collision registered'); // debug
-					const diffY: number = ((ball.getBallY() - paddle.getPaddleY()) / (paddle.getPaddleHeight() / 2)) - 1;
-					const angle: number = diffY * (45 * Math.PI / 180); 		
-					let velocityX: number = this.ball.getBallSpeed() * Math.cos(angle);
-					const velocityY: number = this.ball.getBallSpeed() * Math.sin(angle);
+					
+					const reflectAngle: number = paddle.returnReflectionAngle(ball.getBallY());
+					let angleRad = Phaser.Math.DegToRad(reflectAngle);
+
 					if (paddle === this.rightPaddle) {
-						velocityX = -velocityX;
+						angleRad = Math.PI - angleRad;
 					}
-					ball.setBallVelocity(velocityX, velocityY);
+					console.log('go there');
+					this.ball.updateBallVelocity(angleRad);
 				}
 			});
 		});
@@ -123,39 +120,40 @@ export class GameScene extends BaseScene {
 		this.leftPaddle.updatePaddlePos();
 		this.rightPaddle.updatePaddlePos();
 
-		const ballOut: string = this.ball.isOutOfBounds(this.scale.width, this.scale.height);
+		const ballOut: string = this.ball.isOutOfBounds(this.scale.width);
 
 		if (ballOut !== 'in') { // means a point has been marked
 			this.updateScore(ballOut);
 
 			if (this.leftScore !== 12 && this.rightScore !== 12) {
-				this.ball.resetBall();
+				if (ballOut === 'right') {
+					this.ball.resetBall(true);
+				} else {
+					this.ball.resetBall(false);
+				}
 			} else {
 				this.endGame = true;
 			}
 		}
-		// trigger game over scene if conditions met (score === 12)
 		if (this.leftScore === 12 || this.rightScore === 12) {
 
-			this.time.delayedCall(1500, () => {
+			this.time.delayedCall(1200, () => {
 				this.scene.start('GameOverScene');
 			}, [], this);
 		}
 	}
 
-	private updateScore(side: string) : void { // seems functional
+	private updateScore(side: string) : void { // functional
 		if (side === 'left') {
 			this.rightScore++;
-			this.rightScoreObj.text = '';
-			this.displayScore();
+			this.rightScoreObj.setText(this.rightScore.toString());
 		} else if (side === 'right') {
 			this.leftScore++;
-			this.leftScoreObj.text = '';
-			this.displayScore();
+			this.leftScoreObj.setText(this.leftScore.toString());
 		}
 	}
 
-	private displayNet() : void {
+	private displayNet() : void { // functional
 		const netWidth: number = 4;
 		const netHeight: number = 20;
 		const netGap: number = 15;
@@ -176,3 +174,8 @@ export class GameScene extends BaseScene {
 		drawer.strokePath();
 	}
 }
+
+	// const diffY: number = ((ball.getBallY() - paddle.getPaddleY()) / (paddle.getPaddleHeight() / 2)) - 1;
+	// const angle: number = diffY * (45 * Math.PI / 180); 		
+	// let velocityX: number = this.ball.getBallSpeed() * Math.cos(angle);
+	// const velocityY: number = this.ball.getBallSpeed() * Math.sin(angle);
