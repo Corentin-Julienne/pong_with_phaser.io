@@ -21,7 +21,6 @@ export class Paddle {
         'paddleTexture', "", { label: 'paddle' })
         .setRectangle(width, height);
 
-        // Set the paddle as a dynamic body
         this.paddleImg.setBounce(1);
         this.paddleImg.setFrictionAir(0);
         this.paddleImg.setIgnoreGravity(true);
@@ -31,13 +30,17 @@ export class Paddle {
         this.scene.input.keyboard?.on('keyup', this.handleKeyUp, this);
     }
 
-    private getReflectionAngle(segment: number): number {
-        switch (segment) {
-            case 4:
-            case 5:
-                return 0; // ball will go in straight line
-            default:
-                return 0; // change this later as per your requirement
+    public getImageBody() {
+        return this.paddleImg.body;
+    }
+
+    public updatePaddlePos() : void {
+        if (this.arrowUpPressed) {
+            this.movePaddle(-this.speed);
+        }
+
+        if (this.arrowDownPressed) {
+            this.movePaddle(this.speed);
         }
     }
 
@@ -50,6 +53,29 @@ export class Paddle {
         const segment = Math.round(diffY * 8);
 
         return (this.getReflectionAngle(Math.max(1, Math.min(8, segment))));
+    }
+
+    private getReflectionAngle(segment: number): number {
+        switch (segment) {
+            case 1:
+                return -45;
+            case 2:
+                return -30;
+            case 3:
+                return -15;
+            case 4:
+                return 0;
+            case 5:
+                return 0;
+            case 6:
+                return 15;
+            case 7:
+                return 30;
+            case 8:
+                return 45;
+            default:
+                return 0;
+        }
     }
 
     private handleKeyDown(event: KeyboardEvent) : void {
@@ -80,50 +106,4 @@ export class Paddle {
             this.paddleImg.setPosition(this.paddleImg.x, newY);
         }
     }
-
-    public updatePaddlePos() : void {
-        if (this.arrowUpPressed) {
-            this.movePaddle(-this.speed);
-        }
-
-        if (this.arrowDownPressed) {
-            this.movePaddle(this.speed);
-        }
-    }
-
-    public isMovingUp(): boolean {
-        return this.arrowUpPressed;
-    }
-
-    public isMovingDown(): boolean {
-        return this.arrowDownPressed;
-    }
-
-    public setPaddleSpeed(speed: number) {
-        this.speed = speed;
-    }
-
-    public getImageBody() {
-        return this.paddleImg.body;
-    }
-
-    public getImage() {
-        return this.paddleImg;
-    }
-
-	public getPaddleWidth() {
-		return this.paddleImg.width;
-	}
-
-	public getPaddleHeight() {
-		return this.paddleImg.height;
-	}
-
-	public getPaddleX() {
-		return this.paddleImg.x;
-	}
-
-	public getPaddleY() {
-		return this.paddleImg.y;
-	}
 }

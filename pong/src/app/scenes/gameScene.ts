@@ -25,36 +25,36 @@ export class GameScene extends BaseScene {
 		this.displayNet();
 		this.implementBorders(8);
 		this.createPaddlesWithPhysics(30, 15, 80, 8);
-		this.implementBall(2, 16);
+		this.implementBall(5, 16);
 		this.displayScore();
 		this.setupBorderCollision();
 		this.setupBallPaddleCollision();
 	}
 
-	private implementBorders(borderWidth: number) : void { // works
+	private implementBorders(borderWidth: number) : void {
 		this.topBorder = new Border(this, this.scale.width / 2, borderWidth / 2, 
 		this.scale.width, borderWidth);
 		this.bottomBorder = new Border(this, this.scale.width / 2, this.scale.height - borderWidth / 2, 
 		this.scale.width, borderWidth);
 	}
 
-	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void { // works
+	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void {
 		this.leftPaddle = new Paddle(this, paddleWidth, paddleWidth, paddleHeight, speed);
 		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight, speed);
 	}
 
-	private implementBall(ballSpeed: number, ballSize: number) : void { // works
+	private implementBall(ballSpeed: number, ballSize: number) : void {
 		this.ball = new Ball(this, ballSpeed, ballSize);
 	}
 
-	private displayScore() : void { // this is functional
+	private displayScore() : void {
 		this.leftScoreObj = this.add.text(this.scale.width / 4, 50, this.leftScore.toString(), 
 		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
 		this.rightScoreObj = this.add.text(this.scale.width * 3 / 4, 50, this.rightScore.toString(), 
 		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
 	}
 
-	private setupBorderCollision(): void { // seems to be working
+	private setupBorderCollision(): void {
 		this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionActiveEvent) => {
 			event.pairs.forEach(pair => {
 				if ((pair.bodyA === this.ball.getImageBody() && 
@@ -82,7 +82,7 @@ export class GameScene extends BaseScene {
 		return false;
 	}
 
-	private setupBallPaddleCollision() : void { // check this
+	private setupBallPaddleCollision() : void {
 		this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionActiveEvent) => {
 			event.pairs.forEach(pair => {
 				let ball: Ball | null = null;
@@ -97,16 +97,13 @@ export class GameScene extends BaseScene {
 						paddle = (pair.bodyB === this.leftPaddle.getImageBody()) ? this.leftPaddle : this.rightPaddle;
 					}
 				}
-				if (ball && paddle) {
-					console.log('paddle collision registered'); // debug
-					
+				if (ball && paddle) {					
 					const reflectAngle: number = paddle.returnReflectionAngle(ball.getBallY());
 					let angleRad = Phaser.Math.DegToRad(reflectAngle);
 
 					if (paddle === this.rightPaddle) {
 						angleRad = Math.PI - angleRad;
 					}
-					console.log('go there');
 					this.ball.updateBallVelocity(angleRad);
 				}
 			});
@@ -122,7 +119,7 @@ export class GameScene extends BaseScene {
 
 		const ballOut: string = this.ball.isOutOfBounds(this.scale.width);
 
-		if (ballOut !== 'in') { // means a point has been marked
+		if (ballOut !== 'in') {
 			this.updateScore(ballOut);
 
 			if (this.leftScore !== 12 && this.rightScore !== 12) {
@@ -143,7 +140,7 @@ export class GameScene extends BaseScene {
 		}
 	}
 
-	private updateScore(side: string) : void { // functional
+	private updateScore(side: string) : void {
 		if (side === 'left') {
 			this.rightScore++;
 			this.rightScoreObj.setText(this.rightScore.toString());
@@ -153,14 +150,13 @@ export class GameScene extends BaseScene {
 		}
 	}
 
-	private displayNet() : void { // functional
+	private displayNet() : void {
 		const netWidth: number = 4;
 		const netHeight: number = 20;
 		const netGap: number = 15;
 		const drawer = this.add.graphics();
 		const offset = 8 / 2; // change that
 
-		// count net segments needed
 		const netSegmentCount: number = Math.floor(this.scale.height / (netHeight + netGap));
 
 		drawer.lineStyle(netWidth, 0xFFFFFF);
@@ -174,8 +170,3 @@ export class GameScene extends BaseScene {
 		drawer.strokePath();
 	}
 }
-
-	// const diffY: number = ((ball.getBallY() - paddle.getPaddleY()) / (paddle.getPaddleHeight() / 2)) - 1;
-	// const angle: number = diffY * (45 * Math.PI / 180); 		
-	// let velocityX: number = this.ball.getBallSpeed() * Math.cos(angle);
-	// const velocityY: number = this.ball.getBallSpeed() * Math.sin(angle);

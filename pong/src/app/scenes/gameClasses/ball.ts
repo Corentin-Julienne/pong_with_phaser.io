@@ -17,6 +17,22 @@ export class Ball {
 		this.implementBallMovement(null);
 	}
 
+	public getImage() : Phaser.Physics.Matter.Image {
+		return this.ballImg;
+	}
+
+	public getImageBody() {
+		return this.ballImg.body;
+	}
+
+	public getBallY() : number {
+		return this.ballImg.y;
+	}
+
+	public getBodyVelocity() {
+		return this.ballImg.body?.velocity;
+	}
+
 	public isOutOfBounds(screenWidth: number): 'left' | 'right' | 'in' {
 		const radius = this.size / 2;
 		if (this.ballImg.x + radius < 0) {
@@ -28,60 +44,26 @@ export class Ball {
 	}
 
 	public updateBallVelocity(angleRad: number) : void {
+		
+		if (this.speed < 12)
+			this.speed++;
+
 		const velocityX = Math.cos(angleRad) * this.speed;
 		const velocityY = Math.sin(angleRad) * this.speed;
-
+		
 		this.ballImg.setVelocity(velocityX, velocityY);
-	}
-
-	public setBallDepth(val: number) : void {
-		this.ballImg.setDepth(val);
-	}
-
-	public setBallVelocity(velX: number, velY: number) : void {
-		this.ballImg.setVelocity(velX, velY);
-	}
-
-	public setBallVelX(velX: number) : void {
-		this.ballImg.setVelocityX(velX);
 	}
 
 	public setBallVelY(velY: number) : void {
 		this.ballImg.setVelocityY(velY);
 	}
 
-	public getVelocity() : Phaser.Math.Vector2 | MatterJS.Vector | undefined {
-		if (this.ballImg.body && this.ballImg.body.velocity) {
-			return this.ballImg.body?.velocity;
-		} else {
-			return undefined;
-		}
+	public resetBall(lastPointLostByPlayer1: boolean) : void {
+		this.resetBallPos();
+		this.resetBallSpeed();
+		this.implementBallMovement(lastPointLostByPlayer1);
 	}
-
-	public getImage() : Phaser.Physics.Matter.Image {
-		return this.ballImg;
-	}
-
-	public getImageBody() {
-		return this.ballImg.body;
-	}
-
-	public getBallX() : number {
-		return this.ballImg.x;
-	}
-
-	public getBallY() : number { // used
-		return this.ballImg.y;
-	}
-
-	public getBallSpeed() : number {
-		return this.speed;
-	}
-
-	public getBodyVelocity() {
-		return this.ballImg.body?.velocity;
-	}
-
+	
 	private displayBall(ballSize: number) : void {
 		const circleRadius: number = ballSize / 2;
 		
@@ -107,26 +89,17 @@ export class Ball {
 		this.speed = this.initialSpeed;
 	}
 
-	public resetBall(lastPointLostByPlayer1: boolean) : void {
-		this.resetBallPos();
-		this.resetBallSpeed();
-		this.implementBallMovement(lastPointLostByPlayer1);
-	}
-
-	private implementBallMovement(lastPointLostByPlayer1: boolean | null): void {
+	private implementBallMovement(lastPointLostByPlayer1: boolean | null) : void {
 		let angle!: number;
 		if (lastPointLostByPlayer1 === null) {
-		  // Game just started, choose randomly
 		  if (Math.random() < 0.5) {
 			angle = Phaser.Math.Between(-45, 45);
 		  } else {
 			angle = Phaser.Math.Between(-135, -225);
 		  }
 		} else if (lastPointLostByPlayer1) {
-		  // Player 1 lost, send the ball towards player 2
 		  angle = Phaser.Math.Between(-45, 45);
 		} else {
-		  // Player 2 lost, send the ball towards player 1
 		  angle = Phaser.Math.Between(-135, -225);
 		}
 	  

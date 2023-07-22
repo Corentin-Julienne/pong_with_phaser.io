@@ -30,7 +30,7 @@ export class BootScene extends BaseScene {
 		this.countdownVal--;
 		this.countdownText.setText(this.countdownVal.toString());
 
-		if (this.countdownVal <= 4) { // change this
+		if (this.countdownVal <= 0) {
 			this.scene.start('GameScene');
 		}
 	}

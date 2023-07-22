@@ -21,8 +21,4 @@ export class Border {
 	getImageBody() {
         return this.border.body;
     }
-
-    getImage() {
-        return this.border;
-    }
 }
