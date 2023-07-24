@@ -6,7 +6,7 @@ export class BootScene extends Phaser.Scene {
 	
 	private gameComponent!: GameComponent;
 	private countdownText!: Phaser.GameObjects.Text;
-	private countdownVal: number = 60; // change this
+	private countdownVal: number = 1; // change this
 	private staticAssets!: StaticAssets;
 	
 	constructor () {
@@ -18,7 +18,7 @@ export class BootScene extends Phaser.Scene {
 	}
 
 	create() : void {
-		this.staticAssets = new StaticAssets(this, false, true);
+		this.staticAssets = new StaticAssets(this, true, false, true);
 		this.displayCountdownText();
         this.time.addEvent({
             delay: 1000,
@@ -31,7 +31,7 @@ export class BootScene extends Phaser.Scene {
 	private displayCountdownText() : void { // test
 		const centerX = this.scale.width / 2;
     	const centerY = this.scale.height / 2;
-		const fontSize: number = Math.max(this.scale.width / 10, this.scale.height / 20);
+		const fontSize: number = Math.max(this.scale.width / 10, this.scale.height / 20); // change that
 		
 		this.countdownText = this.add.text(centerX, centerY, this.countdownVal.toString(), 
 		{ fontSize: `${fontSize}px`, color: '#fff' });
@@ -51,9 +51,8 @@ export class BootScene extends Phaser.Scene {
 		this.countdownVal--;
 		this.countdownText.setText(this.countdownVal.toString());
 
-		if (this.countdownVal <= 0) {
-			console.log('end of scene'); // debug of course, remove that after use
-			//this.scene.start('GameScene');
+		if (this.countdownVal === 0) {
+			this.scene.start('GameScene', { gameComponent: this.gameComponent });
 		}
 	}
 

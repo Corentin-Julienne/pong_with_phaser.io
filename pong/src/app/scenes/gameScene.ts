@@ -2,6 +2,7 @@ import { Ball } from "./gameClasses/ball";
 import { Border } from "./gameClasses/border";
 import { Paddle } from "./gameClasses/paddle";
 import { StaticAssets } from "./gameClasses/staticAssets";
+import { ScoreDisplayer } from "./gameClasses/scoreDisplayer";
 import { GameComponent } from "../game/game.component";
 import Phaser from 'phaser';
 
@@ -15,10 +16,7 @@ export class GameScene extends Phaser.Scene {
     private bottomBorder!: Border;
     private rightPaddle!: Paddle;
     private leftPaddle!: Paddle;
-    private leftScoreObj!: Phaser.GameObjects.Text;
-    private rightScoreObj!: Phaser.GameObjects.Text;
-	private leftScore: number = 0;
-	private rightScore: number = 0;
+	private scoreDisplayer!: ScoreDisplayer;
 	private endGame: boolean = false;
 
 	constructor() {
@@ -30,20 +28,19 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	create() : void {
-		this.staticAssets = new StaticAssets(this, true, false);
-		this.implementBorders(8);
+		this.staticAssets = new StaticAssets(this, false, true, false);
+		this.implementBorders();
 		this.createPaddlesWithPhysics(30, 15, 80, 8);
-		this.implementBall(5, 16);
-		this.displayScore();
+		this.implementBall();
+		this.scoreDisplayer = new ScoreDisplayer(this);
+		this.scoreDisplayer.displayScore();
 		this.setupBorderCollision();
 		this.setupBallPaddleCollision();
 	}
 
-	private implementBorders(borderWidth: number) : void {
-		this.topBorder = new Border(this, this.scale.width / 2, borderWidth / 2, 
-		this.scale.width, borderWidth);
-		this.bottomBorder = new Border(this, this.scale.width / 2, this.scale.height - borderWidth / 2, 
-		this.scale.width, borderWidth);
+	private implementBorders() : void {
+		this.topBorder = new Border(this, true);
+		this.bottomBorder = new Border(this, false);
 	}
 
 	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void {
@@ -51,15 +48,8 @@ export class GameScene extends Phaser.Scene {
 		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight, speed);
 	}
 
-	private implementBall(ballSpeed: number, ballSize: number) : void {
-		this.ball = new Ball(this, ballSpeed, ballSize);
-	}
-
-	private displayScore() : void {
-		this.leftScoreObj = this.add.text(this.scale.width / 4, 50, this.leftScore.toString(), 
-		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
-		this.rightScoreObj = this.add.text(this.scale.width * 3 / 4, 50, this.rightScore.toString(), 
-		{ font: '48px monospace', color: '#ffffff' }).setOrigin(0.5);
+	private implementBall() : void {
+		this.ball = new Ball(this);
 	}
 
 	private setupBorderCollision(): void {
@@ -130,9 +120,9 @@ export class GameScene extends Phaser.Scene {
 		const ballOut: string = this.ball.isOutOfBounds(this.scale.width);
 
 		if (ballOut !== 'in') {
-			this.updateScore(ballOut);
+			this.scoreDisplayer.updateScore(ballOut);
 
-			if (this.leftScore !== 12 && this.rightScore !== 12) {
+			if (!this.scoreDisplayer.isMaxScoreReached()) {
 				if (ballOut === 'right') {
 					this.ball.resetBall(true);
 				} else {
@@ -142,7 +132,7 @@ export class GameScene extends Phaser.Scene {
 				this.endGame = true;
 			}
 		}
-		if (this.leftScore === 12 || this.rightScore === 12) {
+		if (this.scoreDisplayer.isMaxScoreReached()) {
 
 			this.time.delayedCall(1200, () => {
 				this.scene.start('GameOverScene');
@@ -153,16 +143,8 @@ export class GameScene extends Phaser.Scene {
 	private handleResizeChanges() : void {
 		if (this.gameComponent.getHasBeenResized() === true) {
 			this.staticAssets.updateGraphicAssets();
-		}
-	}
-
-	private updateScore(side: string) : void {
-		if (side === 'left') {
-			this.rightScore++;
-			this.rightScoreObj.setText(this.rightScore.toString());
-		} else if (side === 'right') {
-			this.leftScore++;
-			this.leftScoreObj.setText(this.leftScore.toString());
+			this.scoreDisplayer.updateScoreWhenResize();
+			this.ball.updateBallWhenResize();
 		}
 	}
 }

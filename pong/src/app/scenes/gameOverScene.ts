@@ -18,7 +18,7 @@ export class GameOverScene extends Phaser.Scene {
 	}
 
 	create(): void {
-		this.staticAssets = new StaticAssets(this, false, false);
+		this.staticAssets = new StaticAssets(this, true, false, false);
 		this.displayGameOverText();
 		
 		this.timedEvent = this.time.addEvent({ delay: 300, callback: this.blinkText, callbackScope: this, loop: true });

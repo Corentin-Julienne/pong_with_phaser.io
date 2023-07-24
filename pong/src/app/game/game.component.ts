@@ -28,7 +28,7 @@ export class GameComponent implements OnDestroy, AfterViewInit {
 
     private addScenesToPhaserGame() : void {
         this.phaserGame.scene.add('BootScene', BootScene, false);
-        // this.phaserGame.scene.add('GameScene', GameScene, false);
+        this.phaserGame.scene.add('GameScene', GameScene, false);
         // this.phaserGame.scene.add('GameOverScene', GameOverScene, false);
     }
     
