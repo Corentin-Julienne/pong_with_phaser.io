@@ -1,58 +1,66 @@
-import { BaseScene } from "./baseScene";
+import { GameComponent } from "../game/game.component";
+import { StaticAssets } from "./gameClasses/staticAssets";
+import Phaser from 'phaser';
 
-export class BootScene extends BaseScene {
+export class BootScene extends Phaser.Scene {
 	
+	private gameComponent!: GameComponent;
 	private countdownText!: Phaser.GameObjects.Text;
-	private countdownVal: number = 5;
+	private countdownVal: number = 60; // change this
+	private staticAssets!: StaticAssets;
 	
 	constructor () {
 		super('BootScene');
 	}
 
-	override create() : void {
-		super.create();
-		this.displayTerrainBorders();
-		this.displayPaddles();
+	init(data: { gameComponent: GameComponent }) {
+		this.gameComponent = data.gameComponent;
+	}
 
-		// initiating display of coutdown
-		this.countdownText = this.add.text(400, 300, this.countdownVal.toString(), 
-		{ fontSize: '32px', color: '#fff' }); // change that
-		// Start the countdown
+	create() : void {
+		this.staticAssets = new StaticAssets(this, false, true);
+		this.displayCountdownText();
         this.time.addEvent({
-            delay: 1000,  // 1 second delay
+            delay: 1000,
             callback: this.updateCountdown,
             callbackScope: this,
             loop: true
         });
 	}
 
-	updateCountdown() : void {
+	private displayCountdownText() : void { // test
+		const centerX = this.scale.width / 2;
+    	const centerY = this.scale.height / 2;
+		const fontSize: number = Math.max(this.scale.width / 10, this.scale.height / 20);
+		
+		this.countdownText = this.add.text(centerX, centerY, this.countdownVal.toString(), 
+		{ fontSize: `${fontSize}px`, color: '#fff' });
+		this.countdownText.setOrigin(0.5);
+	}
+
+	private updateCountdownWhenResize() : void {
+		const centerX = this.scale.width / 2;
+    	const centerY = this.scale.height / 2;
+		const fontSize: number = Math.max(this.scale.width / 10, this.scale.height / 20);
+		
+		this.countdownText.setFontSize(fontSize);
+		this.countdownText.setPosition(centerX, centerY);
+	}
+
+	private updateCountdown() : void {
 		this.countdownVal--;
 		this.countdownText.setText(this.countdownVal.toString());
 
 		if (this.countdownVal <= 0) {
-			this.scene.start('GameScene');
+			console.log('end of scene'); // debug of course, remove that after use
+			//this.scene.start('GameScene');
 		}
 	}
 
-	displayPaddles() : void {
-		const paddleWidth: number = 15;
-		const paddleHeight: number = 60;
-
-		this.add.rectangle(50, this.scale.height / 2, paddleWidth, paddleHeight, 0xFFFFFF);
-		this.add.rectangle(this.scale.width - 50, this.scale.height / 2, paddleWidth, paddleHeight, 0xFFFFFF);
-	}
-
-	displayTerrainBorders() : void {
-		const borderWidth: number = 8;
-		const offset: number = borderWidth / 2;
-
-		// Top border
-		const topBorder = this.add.rectangle(this.scale.width / 2, offset, this.scale.width, 
-		borderWidth, 0xFFFFFF);
-		
-		// Bottom border
-		const bottomBorder = this.add.rectangle(this.scale.width / 2, this.scale.height - offset, 
-		this.scale.width, borderWidth, 0xFFFFFF);
+	override update(time: number, delta: number): void {
+		if (this.gameComponent.getHasBeenResized() === true) {
+			this.staticAssets.updateGraphicAssets();
+			this.updateCountdownWhenResize();
+		}
 	}
 }

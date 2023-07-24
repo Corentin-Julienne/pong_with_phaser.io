@@ -1,10 +1,15 @@
-import { BaseScene } from "./baseScene";
 import { Ball } from "./gameClasses/ball";
 import { Border } from "./gameClasses/border";
 import { Paddle } from "./gameClasses/paddle";
+import { StaticAssets } from "./gameClasses/staticAssets";
+import { GameComponent } from "../game/game.component";
+import Phaser from 'phaser';
 
-export class GameScene extends BaseScene {
+export class GameScene extends Phaser.Scene {
 
+	private gameComponent!: GameComponent;
+	
+	private staticAssets!: StaticAssets;
 	private ball!: Ball;
     private topBorder!: Border;
     private bottomBorder!: Border;
@@ -20,9 +25,12 @@ export class GameScene extends BaseScene {
 		super('GameScene');
 	}
 
-	override create() : void {
-		super.create();
-		this.displayNet();
+	init(data: { gameComponent: GameComponent }) : void {
+		this.gameComponent = data.gameComponent;
+	}
+
+	create() : void {
+		this.staticAssets = new StaticAssets(this, true, false);
 		this.implementBorders(8);
 		this.createPaddlesWithPhysics(30, 15, 80, 8);
 		this.implementBall(5, 16);
@@ -111,6 +119,8 @@ export class GameScene extends BaseScene {
 	}
 	
 	override update(time: number, delta: number): void {
+		this.handleResizeChanges();
+		
 		if (this.endGame)
 			return;
 		
@@ -140,6 +150,12 @@ export class GameScene extends BaseScene {
 		}
 	}
 
+	private handleResizeChanges() : void {
+		if (this.gameComponent.getHasBeenResized() === true) {
+			this.staticAssets.updateGraphicAssets();
+		}
+	}
+
 	private updateScore(side: string) : void {
 		if (side === 'left') {
 			this.rightScore++;
@@ -148,25 +164,5 @@ export class GameScene extends BaseScene {
 			this.leftScore++;
 			this.leftScoreObj.setText(this.leftScore.toString());
 		}
-	}
-
-	private displayNet() : void {
-		const netWidth: number = 4;
-		const netHeight: number = 20;
-		const netGap: number = 15;
-		const drawer = this.add.graphics();
-		const offset = 8 / 2; // change that
-
-		const netSegmentCount: number = Math.floor(this.scale.height / (netHeight + netGap));
-
-		drawer.lineStyle(netWidth, 0xFFFFFF);
-
-		for (let i = 0; i < netSegmentCount; i++) {
-			const y = i * (netHeight + netGap) + offset + netGap / 2;
-			drawer.moveTo(this.scale.width / 2, y);
-			drawer.lineTo(this.scale.width / 2, y + netHeight);
-		}
-
-		drawer.strokePath();
 	}
 }
