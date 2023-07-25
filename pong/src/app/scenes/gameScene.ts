@@ -30,7 +30,7 @@ export class GameScene extends Phaser.Scene {
 	create() : void {
 		this.staticAssets = new StaticAssets(this, false, true, false);
 		this.implementBorders();
-		this.createPaddlesWithPhysics(30, 15, 80, 8);
+		this.createPaddlesWithPhysics();
 		this.implementBall();
 		this.scoreDisplayer = new ScoreDisplayer(this);
 		this.scoreDisplayer.displayScore();
@@ -43,9 +43,9 @@ export class GameScene extends Phaser.Scene {
 		this.bottomBorder = new Border(this, false);
 	}
 
-	private createPaddlesWithPhysics(x: number, paddleWidth: number, paddleHeight: number, speed: number) : void {
-		this.leftPaddle = new Paddle(this, paddleWidth, paddleWidth, paddleHeight, speed);
-		this.rightPaddle = new Paddle(this, this.scale.width - paddleWidth, paddleWidth, paddleHeight, speed);
+	private createPaddlesWithPhysics() : void {
+		this.leftPaddle = new Paddle(this, true);
+		this.rightPaddle = new Paddle(this, false);
 	}
 
 	private implementBall() : void {

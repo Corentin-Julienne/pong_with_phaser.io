@@ -34,19 +34,33 @@ export class Border {
         return (Border.BORDER_HEIGHT * this.scene.scale.height);
     }
 
-    private createBorderImage() : void {
+    private createBordertexture() : void {
         let borderDrawer = this.scene.add.graphics({ fillStyle: { color: 0xFFFFFF } });
         borderDrawer.fillRect(0, 0, this.borderWidth, this.borderHeight);
         borderDrawer.generateTexture('borderTexture', this.borderWidth, this.borderHeight);
         borderDrawer.destroy();
+    }
+
+    private createBorderImage() : void {
+        this.createBordertexture();
 
         this.border = this.scene.matter.add.image(this.x, this.y, 'borderTexture', "", { label: 'border' })
         .setRectangle(this.borderWidth, this.borderHeight)
         .setStatic(true);
     }
 
-    public updateBorderImage() : void {
+    public updateBorderImage() : void { // to test
+        this.borderWidth = this.scene.scale.width;
+        this.borderHeight = this.scene.scale.height * Border.BORDER_HEIGHT;
 
+        this.determineBorderPosition();
+        
+        this.scene.textures.remove('borderTexture');
+        this.createBordertexture();
+
+        this.border.setTexture('borderTexture');
+        this.border.setRectangle(this.borderWidth, this.borderHeight);
+        this.border.setPosition(this.x, this.y);
     }
 
 	public getImageBody() {
